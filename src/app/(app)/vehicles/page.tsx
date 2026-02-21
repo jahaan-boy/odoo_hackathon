@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { Vehicle, VehicleStatus } from "~/types/vehicle";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 const STATUS_LABELS: Record<VehicleStatus, string> = {
   available: "Available",
@@ -124,11 +125,7 @@ export default function VehiclesPage() {
   const maintenance = vehicles.filter((v) => v.status === "in_shop").length;
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center text-xl font-medium">
-        Loading Fleet...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

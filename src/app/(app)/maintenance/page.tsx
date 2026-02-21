@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 type ServiceLogStatus = "IN PROGRESS" | "COMPLETED" | "SCHEDULED";
 
@@ -118,11 +119,7 @@ export default function MaintenancePage() {
   const totalSpend = logs.reduce((acc, log) => acc + log.cost, 0);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading Maintenance Logs...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

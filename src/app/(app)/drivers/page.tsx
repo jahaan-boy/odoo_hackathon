@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 interface Driver {
   _id: string;
@@ -201,11 +202,7 @@ export default function DriversPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center text-lg font-medium text-gray-500">
-        Loading Drivers...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

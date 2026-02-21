@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 interface VehicleOption {
   _id: string;
@@ -43,6 +44,7 @@ export default function TripDispatcherPage() {
     origin: "",
     destination: "",
     estimatedFuelCost: "",
+    distance: "",
   });
 
   const fetchAll = useCallback(async () => {
@@ -116,6 +118,7 @@ export default function TripDispatcherPage() {
           origin: formData.origin,
           destination: formData.destination,
           estimatedFuelCost: Number(formData.estimatedFuelCost),
+          distance: formData.distance ? Number(formData.distance) : null,
         }),
       });
 
@@ -137,6 +140,7 @@ export default function TripDispatcherPage() {
         origin: "",
         destination: "",
         estimatedFuelCost: "",
+        distance: "",
       });
       void fetchAll();
     } catch (err) {
@@ -189,11 +193,7 @@ export default function TripDispatcherPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center text-lg font-medium text-gray-500">
-        Loading Trip Dispatcher...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -420,6 +420,27 @@ export default function TripDispatcherPage() {
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-gray-200 focus:outline-none"
                 placeholder="Enter estimated fuel cost"
                 required
+              />
+            </div>
+
+            {/* Distance */}
+            <div>
+              <label
+                htmlFor="distance"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
+                Distance (km)
+              </label>
+              <input
+                type="number"
+                id="distance"
+                name="distance"
+                value={formData.distance}
+                onChange={handleInputChange}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-gray-200 focus:outline-none"
+                placeholder="Enter route distance in km"
+                min="0"
+                step="0.1"
               />
             </div>
 

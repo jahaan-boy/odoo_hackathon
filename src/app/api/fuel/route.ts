@@ -92,10 +92,13 @@ export async function GET() {
           driverId: String(t.driverId ?? ""),
           driverName: driverMap.get(String(t.driverId ?? "")) ?? "Unknown",
           status: String(t.status ?? ""),
-          distance:
-            t.endOdometer && t.startOdometer
-              ? Number(t.endOdometer) - Number(t.startOdometer)
-              : null,
+          // prefer explicit distance field, fall back to odometer delta
+          distance: (() => {
+            if (t.distance != null) return Number(t.distance);
+            if (t.endOdometer && t.startOdometer)
+              return Number(t.endOdometer) - Number(t.startOdometer);
+            return null;
+          })(),
           cargoWeight: Number(t.cargoWeight ?? 0),
         },
       ]),
@@ -104,6 +107,10 @@ export async function GET() {
     const enriched = fuelLogs.map((f) => {
       const tripId = f.tripId ? f.tripId.toString() : null;
       const trip = tripId ? tripMap.get(tripId) : null;
+      const kmPerLiter =
+        trip?.distance && f.liters > 0
+          ? Math.round((trip.distance / f.liters) * 100) / 100
+          : null;
       return {
         _id: f._id.toString(),
         vehicleId: f.vehicleId.toString(),
@@ -119,6 +126,8 @@ export async function GET() {
         odometer: f.odometer,
         date: f.date,
         createdAt: f.createdAt,
+        distance: trip?.distance ?? null,
+        kmPerLiter,
       };
     });
 
@@ -126,6 +135,20 @@ export async function GET() {
     const totalFuelCost = fuelLogs.reduce((sum, f) => sum + (f.cost ?? 0), 0);
     const totalLiters = fuelLogs.reduce((sum, f) => sum + (f.liters ?? 0), 0);
     const avgCostPerLiter = totalLiters > 0 ? totalFuelCost / totalLiters : 0;
+
+    // Average fuel efficiency across logs that have distance data
+    const logsWithEfficiency = enriched.filter((e) => e.kmPerLiter !== null);
+    const avgKmPerLiter =
+      logsWithEfficiency.length > 0
+        ? Math.round(
+            (logsWithEfficiency.reduce(
+              (sum, e) => sum + (e.kmPerLiter ?? 0),
+              0,
+            ) /
+              logsWithEfficiency.length) *
+              100,
+          ) / 100
+        : 0;
 
     return NextResponse.json({
       success: true,
@@ -135,6 +158,7 @@ export async function GET() {
         totalLiters,
         avgCostPerLiter: Math.round(avgCostPerLiter * 100) / 100,
         totalEntries: fuelLogs.length,
+        avgKmPerLiter,
       },
     });
   } catch (error: unknown) {

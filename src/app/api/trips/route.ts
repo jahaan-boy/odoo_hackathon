@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
     const origin = body.origin as string | undefined;
     const destination = body.destination as string | undefined;
     const estimatedFuelCost = body.estimatedFuelCost as number | undefined;
+    const distance = body.distance as number | null | undefined;
 
     if (
       !vehicleId ||
@@ -174,6 +175,7 @@ export async function POST(req: NextRequest) {
       origin,
       destination,
       estimatedFuelCost: Number(estimatedFuelCost),
+      distance: distance != null ? Number(distance) : null,
       status: "Dispatched",
       createdAt: new Date(),
       updatedAt: new Date(),

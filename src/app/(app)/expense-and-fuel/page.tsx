@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 interface FuelLog {
   _id: string;
@@ -15,6 +16,8 @@ interface FuelLog {
   odometer: number;
   date: string;
   createdAt: string;
+  distance: number | null;
+  kmPerLiter: number | null;
 }
 
 interface FuelSummary {
@@ -22,6 +25,7 @@ interface FuelSummary {
   totalLiters: number;
   avgCostPerLiter: number;
   totalEntries: number;
+  avgKmPerLiter: number;
 }
 
 interface VehicleOption {
@@ -48,6 +52,7 @@ export default function ExpensesAndFuelPage() {
     totalLiters: 0,
     avgCostPerLiter: 0,
     totalEntries: 0,
+    avgKmPerLiter: 0,
   });
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [trips, setTrips] = useState<TripOption[]>([]);
@@ -248,6 +253,12 @@ export default function ExpensesAndFuelPage() {
           <p className="text-2xl font-bold">₹{summary.avgCostPerLiter}</p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-sm text-gray-500">Avg Fuel Efficiency</p>
+          <p className="text-2xl font-bold">
+            {summary.avgKmPerLiter > 0 ? `${summary.avgKmPerLiter} km/L` : "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Entries</p>
           <p className="text-2xl font-bold">{summary.totalEntries}</p>
         </div>
@@ -256,9 +267,7 @@ export default function ExpensesAndFuelPage() {
       {/* FUEL LOGS TABLE */}
       <section className="rounded-xl border border-gray-200 bg-white p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
-          </div>
+          <LoadingScreen />
         ) : fuelLogs.length === 0 ? (
           <div className="py-12 text-center text-gray-500">
             No fuel logs recorded yet. Click &quot;Log Fuel Expense&quot; to add
@@ -275,6 +284,7 @@ export default function ExpensesAndFuelPage() {
                   <th className="px-3 py-2 text-left font-bold">Liters</th>
                   <th className="px-3 py-2 text-left font-bold">Cost</th>
                   <th className="px-3 py-2 text-left font-bold">Odometer</th>
+                  <th className="px-3 py-2 text-left font-bold">km/L</th>
                   <th className="px-3 py-2 text-left font-bold">Date</th>
                   <th className="px-3 py-2 text-left font-bold">Actions</th>
                 </tr>
@@ -294,6 +304,15 @@ export default function ExpensesAndFuelPage() {
                     <td className="px-3 py-2">₹{log.cost.toLocaleString()}</td>
                     <td className="px-3 py-2">
                       {log.odometer.toLocaleString()} km
+                    </td>
+                    <td className="px-3 py-2">
+                      {log.kmPerLiter !== null ? (
+                        <span className="font-medium text-green-700">
+                          {log.kmPerLiter} km/L
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-sm">
                       {new Date(log.date).toLocaleDateString()}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 interface DashboardKpis {
   activeFleet: number;
@@ -64,11 +65,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center text-lg font-medium text-gray-500">
-        Loading dashboard...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {

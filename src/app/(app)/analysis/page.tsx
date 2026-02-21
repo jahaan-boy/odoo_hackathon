@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import LoadingScreen from "~/components/ui/LoadingScreen";
 
 interface AnalyticsKpis {
   totalFuelCost: number;
@@ -81,11 +82,7 @@ export default function AnalyticsPage() {
   }, [fetchAnalytics]);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center text-lg font-medium text-gray-500">
-        Loading Analytics...
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {
