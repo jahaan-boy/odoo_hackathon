@@ -34,10 +34,25 @@ interface MonthlySummary {
   profit: number;
 }
 
+interface TripFuelCost {
+  _id: string;
+  vehicleName: string;
+  driverName: string;
+  origin: string;
+  destination: string;
+  distance: number | null;
+  status: string;
+  estimatedFuelCost: number;
+  actualFuelCost: number;
+  actualLiters: number;
+  createdAt: string;
+}
+
 interface AnalyticsData {
   kpis: AnalyticsKpis;
   topCostliestVehicles: CostliestVehicle[];
   monthlySummary: MonthlySummary[];
+  tripFuelCosts: TripFuelCost[];
 }
 
 const formatCurrency = (amount: number) => {
@@ -103,6 +118,7 @@ export default function AnalyticsPage() {
   const kpis = data?.kpis;
   const topVehicles = data?.topCostliestVehicles ?? [];
   const monthly = data?.monthlySummary ?? [];
+  const tripFuelCosts = data?.tripFuelCosts ?? [];
 
   return (
     <div className="space-y-6">
@@ -283,6 +299,100 @@ export default function AnalyticsPage() {
                     </td>
                   </tr>
                 ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Trip Fuel Costs */}
+      <div className="rounded-xl border border-gray-200 bg-white">
+        <div className="border-b border-gray-200 px-5 py-4 text-sm font-medium">
+          Trip Fuel Costs ({tripFuelCosts.length})
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <tr>
+                <th className="px-4 py-3 text-left">Vehicle</th>
+                <th className="px-4 py-3 text-left">Driver</th>
+                <th className="px-4 py-3 text-left">Route</th>
+                <th className="px-4 py-3 text-right">Distance</th>
+                <th className="px-4 py-3 text-right">Est. Fuel Cost</th>
+                <th className="px-4 py-3 text-right">Actual Fuel Cost</th>
+                <th className="px-4 py-3 text-right">Actual Liters</th>
+                <th className="px-4 py-3 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tripFuelCosts.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-4 py-8 text-center text-gray-400"
+                  >
+                    No trips found. Dispatch trips to see fuel cost data here.
+                  </td>
+                </tr>
+              ) : (
+                tripFuelCosts.map((trip) => {
+                  const diff = trip.actualFuelCost - trip.estimatedFuelCost;
+                  return (
+                    <tr
+                      key={trip._id}
+                      className="border-t border-gray-200 transition-colors hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {trip.vehicleName}
+                      </td>
+                      <td className="px-4 py-3">{trip.driverName}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {trip.origin && trip.destination
+                          ? `${trip.origin} → ${trip.destination}`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {trip.distance != null
+                          ? `${trip.distance.toLocaleString()} km`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        ${trip.estimatedFuelCost.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {trip.actualFuelCost > 0 ? (
+                          <span
+                            className={
+                              diff > 0 ? "text-red-600" : "text-green-700"
+                            }
+                          >
+                            ${trip.actualFuelCost.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {trip.actualLiters > 0 ? `${trip.actualLiters} L` : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                            trip.status === "Completed"
+                              ? "bg-green-100 text-green-700"
+                              : trip.status === "Dispatched"
+                                ? "bg-blue-100 text-blue-700"
+                                : trip.status === "Cancelled"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {trip.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

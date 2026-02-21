@@ -6,12 +6,15 @@ export async function GET() {
     const db = await getDb();
 
     // Fetch all data in parallel
-    const [vehicles, trips, serviceLogs, fuelLogs] = await Promise.all([
-      db.collection("vehicles").find({}).toArray(),
-      db.collection("trips").find({}).toArray(),
-      db.collection("services").find({}).toArray(),
-      db.collection("fuelLogs").find({}).toArray(),
-    ]);
+    const [vehicles, trips, serviceLogs, fuelLogs, drivers] = await Promise.all(
+      [
+        db.collection("vehicles").find({}).toArray(),
+        db.collection("trips").find({}).toArray(),
+        db.collection("services").find({}).toArray(),
+        db.collection("fuelLogs").find({}).toArray(),
+        db.collection("drivers").find({}).toArray(),
+      ],
+    );
 
     // ── KPI Calculations ──
 
@@ -244,6 +247,61 @@ export async function GET() {
         },
         topCostliestVehicles,
         monthlySummary,
+        tripFuelCosts: (() => {
+          // Build lookup maps
+          const vehicleNameMap = new Map(
+            vehicles.map((v) => [
+              v._id.toString(),
+              String(v.name ?? v.licensePlate ?? "Unknown"),
+            ]),
+          );
+          const driverNameMap = new Map(
+            drivers.map((d) => [d._id.toString(), String(d.name ?? "Unknown")]),
+          );
+
+          // Aggregate actual fuel cost per trip from fuelLogs
+          const actualFuelByTrip = new Map<
+            string,
+            { cost: number; liters: number }
+          >();
+          for (const log of fuelLogs) {
+            const tId = log.tripId ? String(log.tripId) : null;
+            if (!tId) continue;
+            const existing = actualFuelByTrip.get(tId) ?? {
+              cost: 0,
+              liters: 0,
+            };
+            existing.cost += Number(log.cost ?? 0);
+            existing.liters += Number(log.liters ?? 0);
+            actualFuelByTrip.set(tId, existing);
+          }
+
+          return trips
+            .map((t) => {
+              const tripId = t._id.toString();
+              const actual = actualFuelByTrip.get(tripId);
+              return {
+                _id: tripId,
+                vehicleName:
+                  vehicleNameMap.get(String(t.vehicleId ?? "")) ?? "Unknown",
+                driverName:
+                  driverNameMap.get(String(t.driverId ?? "")) ?? "Unknown",
+                origin: String(t.origin ?? ""),
+                destination: String(t.destination ?? ""),
+                distance: t.distance != null ? Number(t.distance) : null,
+                status: String(t.status ?? "Draft"),
+                estimatedFuelCost: Number(t.estimatedFuelCost ?? 0),
+                actualFuelCost: actual?.cost ?? 0,
+                actualLiters: actual?.liters ?? 0,
+                createdAt: t.createdAt as Date,
+              };
+            })
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+        })(),
       },
     });
   } catch (error: unknown) {
